@@ -1,0 +1,68 @@
+package br.org.ciee.kairos.vagas.api.controller.alterardadoscontrato;
+
+import java.util.List;
+
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.org.ciee.kairos.vagas.api.cliente.alterardadoscontrato.AlterarDadosContratoContractService;
+import br.org.ciee.kairos.vagas.api.cliente.alterardadoscontrato.AlterarDadosContratoRequest;
+import br.org.ciee.kairos.vagas.api.cliente.alterardadoscontrato.BuscarDadosContratoDTO;
+import br.org.ciee.kairos.vagas.api.cliente.alterardadoscontrato.FiltroAlterarDadosContratoDTO;
+import br.org.ciee.kairos.vagas.api.mapper.alterardadoscontrato.AlterarDadosContratoMapper;
+import br.org.ciee.kairos.vagas.business.model.entity.contrato.ContratoEstudanteEmpresa;
+import br.org.ciee.kairos.vagas.business.service.contratoestudanteempresa.ContratoEstudanteEmpresaService;
+import io.swagger.annotations.Api;
+
+@RestController
+@Api("Endpoint para alterar os dados dos contratos")
+public class AlterarDadosContratoController implements AlterarDadosContratoContractService {
+
+	@Autowired
+	private ContratoEstudanteEmpresaService contratoEstudanteEmpresaService;
+
+	@Autowired
+	private AlterarDadosContratoMapper alterarDadosContratoMapper;
+
+	@Override
+	public ResponseEntity<List<FiltroAlterarDadosContratoDTO>> obterContratoEstudanteEmpresa(
+	        @RequestHeader("Authorization") String token,
+	        @RequestParam(value = "cpfEstudante", required = false) String cpfEstudante,
+	        @RequestParam(value = "codigoEstudante", required = false) String codigoEstudante,
+	        @RequestParam(value = "idContratoEstudanteEmpresa", required = false) Long idContratoEstudanteEmpresa) {
+	    List<ContratoEstudanteEmpresa> listaContratoEstudante = contratoEstudanteEmpresaService
+	            .buscarContratoPorCpfOrCodigoEstudante(cpfEstudante, codigoEstudante, idContratoEstudanteEmpresa);
+
+	    List<FiltroAlterarDadosContratoDTO> contratoDTOs = alterarDadosContratoMapper
+	            .buscaDadosContrato(listaContratoEstudante);
+	    return ResponseEntity.ok(contratoDTOs);
+	}
+
+	@Override
+	public ResponseEntity<Void> atualizarDadosContrato(@RequestHeader("Authorization") String token,
+			@PathVariable("idContratoEstudanteEmpresa") Long idContratoEstudanteEmpresa,
+			@Valid @RequestBody AlterarDadosContratoRequest alterarDadosContratoRequest) {
+
+		this.contratoEstudanteEmpresaService.atualizarDadosContrato(
+				this.contratoEstudanteEmpresaService.buscarContratoEstudEmpPorId(idContratoEstudanteEmpresa),
+				alterarDadosContratoMapper.atualizarDadosContrato(alterarDadosContratoRequest));
+		return ResponseEntity.ok().build();
+	}
+
+	@Override
+	public ResponseEntity<BuscarDadosContratoDTO> buscarDetalhesContratoEstudante(
+			@RequestHeader("Authorization") String token,
+			@PathVariable("idContratoEstudanteEmpresa") Long idContratoEstudanteEmpresa, 
+			BuscarDadosContratoDTO alterarDadosContratoDTO){
+		return ResponseEntity.ok(this.alterarDadosContratoMapper.alterarDadosContratoDTO(
+				this.contratoEstudanteEmpresaService.buscarContratoEstudEmpPorId(idContratoEstudanteEmpresa)));
+	}
+
+}
